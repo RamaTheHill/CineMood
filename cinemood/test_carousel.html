@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CineMood — TEST CAROUSEL</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="preload" as="image" href="https://image.tmdb.org/t/p/original/1E5baAaEse26fej7uHcjOgEE2t2.jpg" />
+  <link rel="preload" as="image" href="https://image.tmdb.org/t/p/original/d5iIlFn5s0ImszYzBPb8JPIfbXD.jpg" />
+  <link rel="preload" as="image" href="https://image.tmdb.org/t/p/original/mBaXZ95R2OxueZhvQbcEWy2DqyO.jpg" />
+  
+  <script>
+    // --- TEST FRAMEWORK ---
+    const logs = [];
+    const results = [];
+    function log(msg) {
+      console.log("[TEST] " + msg);
+      logs.push(msg);
+      const logContainer = document.getElementById("test-log");
+      if (logContainer) {
+        logContainer.textContent += msg + "\n";
+      }
+    }
+    function assert(cond, desc) {
+      if (cond) {
+        log("[PASS] " + desc);
+        results.push({ desc, status: "PASS" });
+      } else {
+        log("[FAIL] " + desc);
+        results.push({ desc, status: "FAIL" });
+      }
+    }
+    
+    // Intercept setInterval and clearInterval
+    const activeIntervals = new Map();
+    let intervalCounter = 0;
+    const originalSetInterval = window.setInterval;
+    const originalClearInterval = window.clearInterval;
+    
+    window.setInterval = function(callback, delay, ...args) {
+      const id = ++intervalCounter;
+      const intervalObj = {
+        id,
+        callback,
+        delay,
+        args,
+        cleared: false
+      };
+      activeIntervals.set(id, intervalObj);
+      log("setInterval called: ID=" + id + ", delay=" + delay);
+      
+      intervalObj.nativeId = originalSetInterval(() => {
+        if (!intervalObj.cleared) {
+          callback();
+        }
+      }, delay, ...args);
+      
+      return id;
+    };
+    
+    window.clearInterval = function(id) {
+      log("clearInterval called: ID=" + id);
+      const obj = activeIntervals.get(id);
+      if (obj) {
+        obj.cleared = true;
+        originalClearInterval(obj.nativeId);
+        activeIntervals.delete(id);
+      } else {
+        // Fallback for native IDs
+        for (const [virtId, o] of activeIntervals.entries()) {
+          if (o.nativeId === id) {
+            o.cleared = true;
+            originalClearInterval(o.nativeId);
+            activeIntervals.delete(virtId);
+            break;
+          }
+        }
+      }
+    };
+    
+    // Mock visibility state
+    let isDocumentHidden = false;
+    Object.defineProperty(document, 'hidden', {
+      get: function() { return isDocumentHidden; },
+      configurable: true
+    });
+    
+    function setDocumentHidden(val) {
+      isDocumentHidden = val;
+      log("document.hidden mocked to: " + val);
+      document.dispatchEvent(new Event("visibilitychange"));
+    }
+    
+    window.testResults = { results, logs };
+  </script>
+</head>
+<body>
+
+  <!-- Test Log Output Container -->
+  <pre id="test-log" style="background: #111; color: #0f0; padding: 20px; font-family: monospace; font-size: 14px; white-space: pre-wrap; margin: 20px; border-radius: 5px; max-height: 300px; overflow-y: auto;"></pre>
+
+  <!-- HERO -->
+  <section class="hero" id="screen-hero">
+    <div class="hero-bg">
+      <div class="bg-slide active" style="background-image: url('https://image.tmdb.org/t/p/original/1E5baAaEse26fej7uHcjOgEE2t2.jpg')"></div>
+      <div class="bg-slide" style="background-image: url('https://image.tmdb.org/t/p/original/d5iIlFn5s0ImszYzBPb8JPIfbXD.jpg')"></div>
+      <div class="bg-slide" style="background-image: url('https://image.tmdb.org/t/p/original/mBaXZ95R2OxueZhvQbcEWy2DqyO.jpg')"></div>
+      <div class="hero-overlay"></div>
+    </div>
+    <div class="hero-content">
+      <div class="logo">🎬 CineMood</div>
+      <h1>Фильм, который почувствует тебя</h1>
+      <p class="subtitle">Не топ-10. Не «сейчас в тренде».<br/>Подбор через твоё внутреннее состояние — за 2 минуты.</p>
+      
+      <div class="mode-toggle-wrap">
+        <span class="mode-label">Режим поиска:</span>
+        <div class="mode-toggle" id="mode-toggle">
+          <button class="mode-btn active" data-mode="local">Локальный (Быстрый)</button>
+          <button class="mode-btn" data-mode="tmdb">Онлайн (TMDB)</button>
+        </div>
+      </div>
+
+      <button class="btn-start" id="btn-start">Начать подбор</button>
+      <div class="hero-meta">Без регистрации · Бесплатно · Работает на психологии</div>
+    </div>
+    <div class="film-strip">
+      <div class="film-strip-track">
+        <span>Паразиты</span><span>Манчестер у моря</span><span>Прочь</span><span>Жизнь Пи</span>
+        <span>Она</span><span>Меланхолия</span><span>1917</span><span>Атака титанов</span>
+        <span>Тихое место</span><span>Euphoria</span><span>Аркейн</span><span>Душа</span>
+        <span>Паразиты</span><span>Манчестер у моря</span><span>Прочь</span><span>Жизнь Пи</span>
+        <span>Она</span><span>Меланхолия</span><span>1917</span><span>Атака титанов</span>
+        <span>Тихое место</span><span>Euphoria</span><span>Аркейн</span><span>Душа</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- QUIZ -->
+  <section class="quiz-wrap hidden" id="screen-quiz">
+    <div class="quiz-inner">
+      <button class="btn-home" id="btn-home">← На главную</button>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar" id="progress-bar"></div>
+      </div>
+      <div class="step-label" id="step-label">Шаг 1 из 9</div>
+      <div id="steps-container"></div>
+      <div class="quiz-nav">
+        <button class="btn-back" id="btn-back">← Назад</button>
+        <button class="btn-next" id="btn-next">Далее →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- LOADING -->
+  <section class="loading-wrap hidden" id="screen-loading">
+    <div class="loading-content">
+      <div class="film-reel">🎞</div>
+      <h2 id="loading-title">Анализируем твоё состояние...</h2>
+      <div class="loading-steps" id="loading-steps">
+        <div class="ls-item active" id="ls1">Читаем настроение</div>
+        <div class="ls-item" id="ls2">Формируем запрос к базе</div>
+        <div class="ls-item" id="ls3">Получаем 1 000 000+ тайтлов</div>
+        <div class="ls-item" id="ls4">Финальный выбор</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- RESULTS -->
+  <section class="results-wrap hidden" id="screen-results">
+    <div class="results-inner">
+      <div class="results-header">
+        <div class="results-tag">Твой подбор готов</div>
+        <h2>Вот что тебе сейчас нужно</h2>
+      </div>
+
+      <!-- MAIN CARD -->
+      <div class="analysis-box hidden" id="analysis-box">
+        <h4>🧠 Анализ вашего состояния</h4>
+        <p id="analysis-text">—</p>
+      </div>
+
+      <div class="main-card" id="main-card">
+        <div class="card-glow"></div>
+        <div class="card-poster-wrap hidden" id="card-poster-wrap">
+          <img id="card-poster" src="" alt="Постер" />
+        </div>
+        <div class="card-body">
+          <div class="card-badge" id="main-badge">Главная рекомендация</div>
+          <div class="card-top">
+            <div class="card-info">
+              <h3 id="main-title">—</h3>
+              <div class="card-meta">
+                <span id="main-year">—</span>
+                <span class="dot">·</span>
+                <span id="main-type">—</span>
+                <span class="dot">·</span>
+                <span id="main-genre">—</span>
+              </div>
+              <div class="card-rating" id="main-rating">—</div>
+            </div>
+            <div class="mood-ring">
+              <svg viewBox="0 0 80 80">
+                <circle cx="40" cy="40" r="34" class="ring-bg"/>
+                <circle cx="40" cy="40" r="34" class="ring-fill" id="ring-fill"/>
+              </svg>
+              <span class="ring-pct" id="ring-pct">—%</span>
+              <span class="ring-label">совпадение</span>
+            </div>
+          </div>
+          <p class="card-why" id="main-why">—</p>
+          <div class="card-where-row">
+            <div class="card-where">
+              <span class="where-label">Где смотреть:</span>
+              <span class="where-val" id="main-where">—</span>
+            </div>
+            <a class="btn-tmdb hidden" id="btn-tmdb-link" href="#" target="_blank">Подробнее →</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- ALTERNATIVES -->
+      <div class="alts-label">Другие подходящие варианты:</div>
+      <div class="alts-grid" id="alts-grid"></div>
+
+      <button class="btn-refine" id="btn-refine">🎯 Уточнить подбор</button>
+      <button class="btn-restart" id="btn-restart">↩ Пройти заново</button>
+      <button class="btn-home-results" id="btn-home-results">🏠 На главную</button>
+    </div>
+  </section>
+
+  <script type="module" src="app.js"></script>
+
+  <script>
+    // Wait for the window to load and app.js to run
+    window.addEventListener('load', async () => {
+      // Small timeout to let app.js initial code execute
+      await new Promise(resolve => setTimeout(resolve, 200));
+      
+      log("Starting tests...");
+      
+      try {
+        // Test 1: Initial Carousel State
+        assert(activeIntervals.size === 1, "Carousel should start with exactly 1 active interval initially");
+        let initialInterval = Array.from(activeIntervals.values())[0];
+        assert(initialInterval && initialInterval.delay === 8000, "Carousel transition interval should be exactly 8000ms (8 seconds)");
+        
+        // Test 2: Transitioning to the quiz screen (clicking "#btn-start") pauses the timer immediately
+        const btnStart = document.getElementById("btn-start");
+        if (btnStart) {
+          log("Clicking #btn-start...");
+          btnStart.click();
+          await new Promise(resolve => setTimeout(resolve, 100));
+          assert(activeIntervals.size === 0, "Timer should be paused immediately after transitioning to quiz screen");
+        } else {
+          assert(false, "btn-start element not found");
+        }
+        
+        // Test 3: Stress-test screen switching (home -> quiz -> home)
+        log("Stress-testing screen switching (quiz -> home -> quiz -> home)...");
+        const btnHome = document.getElementById("btn-home");
+        if (btnHome) {
+          for (let i = 0; i < 5; i++) {
+            log(`Switch cycle ${i + 1}: returning to home`);
+            btnHome.click();
+            await new Promise(resolve => setTimeout(resolve, 100));
+            assert(activeIntervals.size === 1, `Cycle ${i+1}: Should have exactly 1 active interval on home screen`);
+            
+            log(`Switch cycle ${i + 1}: going to quiz`);
+            btnStart.click();
+            await new Promise(resolve => setTimeout(resolve, 100));
+            assert(activeIntervals.size === 0, `Cycle ${i+1}: Should have 0 active intervals on quiz screen`);
+          }
+          
+          // Return to home to verify final state
+          btnHome.click();
+          await new Promise(resolve => setTimeout(resolve, 100));
+          assert(activeIntervals.size === 1, "Should have exactly 1 active interval on home screen after stress test");
+        } else {
+          assert(false, "btn-home element not found");
+        }
+        
+        // Test 4: Verify visibilitychange pause logic
+        log("Testing visibilitychange pause logic...");
+        assert(activeIntervals.size === 1, "Should be active before hiding document");
+        
+        setDocumentHidden(true);
+        await new Promise(resolve => setTimeout(resolve, 100));
+        assert(activeIntervals.size === 0, "Carousel should pause when document is hidden");
+        
+        setDocumentHidden(false);
+        await new Promise(resolve => setTimeout(resolve, 100));
+        assert(activeIntervals.size === 1, "Carousel should resume when document is shown again");
+        
+        // Test 5: Verify slide transitions when carousel ticks
+        log("Testing carousel slide advancement...");
+        const slides = document.querySelectorAll(".bg-slide");
+        let activeSlide = document.querySelector(".bg-slide.active");
+        let activeIndex = Array.from(slides).indexOf(activeSlide);
+        log(`Initial active slide index: ${activeIndex}`);
+        
+        // We can manually trigger the callback of the active interval to simulate 8s passing
+        const currentInterval = Array.from(activeIntervals.values())[0];
+        if (currentInterval) {
+          log("Triggering carousel interval callback manually...");
+          currentInterval.callback();
+          
+          let newActiveSlide = document.querySelector(".bg-slide.active");
+          let newActiveIndex = Array.from(slides).indexOf(newActiveSlide);
+          log(`New active slide index: ${newActiveIndex}`);
+          assert(newActiveIndex === (activeIndex + 1) % slides.length, "Active slide should advance by 1 after tick");
+        } else {
+          assert(false, "No active interval found to trigger callback");
+        }
+      } catch (err) {
+        log("ERROR during test execution: " + err.message);
+        console.error(err);
+      }
+      
+      // Print summary
+      log("All tests completed.");
+      const failed = results.filter(r => r.status === "FAIL");
+      if (failed.length === 0) {
+        log("SUCCESS: ALL TESTS PASSED");
+        document.body.insertAdjacentHTML('afterbegin', '<div id="test-summary" style="background:green;color:white;padding:20px;font-size:24px;position:fixed;top:0;left:0;right:0;z-index:99999;">SUCCESS: ALL TESTS PASSED</div>');
+      } else {
+        log(`FAILURE: ${failed.length} TESTS FAILED`);
+        document.body.insertAdjacentHTML('afterbegin', `<div id="test-summary" style="background:red;color:white;padding:20px;font-size:24px;position:fixed;top:0;left:0;right:0;z-index:99999;">FAILURE: ${failed.length} TESTS FAILED</div>`);
+      }
+      
+      // Send results to python server
+      const report = {
+        results: results,
+        logs: logs
+      };
+      try {
+        await fetch('/report_results', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(report)
+        });
+      } catch (e) {
+        log("Failed to send results to server: " + e.message);
+      }
+    });
+  </script>
+</body>
+</html>

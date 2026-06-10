@@ -1,0 +1,38 @@
+diff --git a/cinemood/app.js b/cinemood/app.js
+--- a/cinemood/app.js
++++ b/cinemood/app.js
+@@ -982,5 +982,5 @@
+-  const top = scored.slice(0, 3);
++  const top = scored.slice(0, 6);
+   const toMoodMatch = (score) => Math.max(60, Math.min(98, Math.round(score)));
+ 
+   const main = { ...top[0], mood_match: toMoodMatch(top[0].score) };
+-  const alts = top.slice(1, 3).map((f, i) => ({
++  const alts = top.slice(1, 6).map((f, i) => ({
+     ...f,
+     mood_match: toMoodMatch(f.score - 8 - i * 4)
+   }));
+diff --git a/cinemood/api.js b/cinemood/api.js
+--- a/cinemood/api.js
++++ b/cinemood/api.js
+@@ -159,3 +159,3 @@
+-      const items = (data.results || []).slice(0, 8);
++      const items = (data.results || []).slice(0, 12);
+       results.push(...items.map(item => normalizeItem(item, ep.mediaType)));
+@@ -177,9 +177,9 @@
+-  const top3 = scored.slice(0, 3);
+-  if (top3.length === 0) {
++  const top6 = scored.slice(0, 6);
++  if (top6.length === 0) {
+     throw new Error("No recommendations found from TMDB");
+   }
+ 
+   const output = {
+-    main: { ...top3[0], mood_match: clamp(top3[0]?.score || 70) },
+-    alts: top3.slice(1).map((r, i) => ({
+-      ...r, mood_match: clamp((top3[0]?.score || 70) - 8 - i * 5)
++    main: { ...top6[0], mood_match: clamp(top6[0]?.score || 70) },
++    alts: top6.slice(1).map((r, i) => ({
++      ...r, mood_match: clamp((top6[0]?.score || 70) - 8 - i * 5)
+     }))
+   };

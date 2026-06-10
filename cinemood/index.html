@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CineMood — Фильм под твоё настроение</title>
+  <meta name="description" content="Психологический подбор фильмов и сериалов под твоё внутреннее состояние. Не рейтинги — а резонанс." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,700;1,400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="preload" as="image" href="https://image.tmdb.org/t/p/original/1E5baAaEse26fej7uHcjOgEE2t2.jpg" />
+  <link rel="preload" as="image" href="https://image.tmdb.org/t/p/original/d5iIlFn5s0ImszYzBPb8JPIfbXD.jpg" />
+  <link rel="preload" as="image" href="https://image.tmdb.org/t/p/original/mBaXZ95R2OxueZhvQbcEWy2DqyO.jpg" />
+</head>
+<body>
+
+  <!-- HERO -->
+  <section class="hero" id="screen-hero">
+    <div class="hero-bg">
+      <div class="bg-slide active" style="background-image: url('https://image.tmdb.org/t/p/original/1E5baAaEse26fej7uHcjOgEE2t2.jpg')"></div>
+      <div class="bg-slide" style="background-image: url('https://image.tmdb.org/t/p/original/d5iIlFn5s0ImszYzBPb8JPIfbXD.jpg')"></div>
+      <div class="bg-slide" style="background-image: url('https://image.tmdb.org/t/p/original/mBaXZ95R2OxueZhvQbcEWy2DqyO.jpg')"></div>
+      <div class="hero-overlay"></div>
+    </div>
+    <div class="hero-content">
+      <div class="logo">🎬 CineMood</div>
+      <h1>Фильм, который почувствует тебя</h1>
+      <p class="subtitle">Не топ-10. Не «сейчас в тренде».<br/>Подбор через твоё внутреннее состояние — за 2 минуты.</p>
+      
+      <div class="mode-toggle-wrap">
+        <span class="mode-label">Режим поиска:</span>
+        <div class="mode-toggle" id="mode-toggle">
+          <button class="mode-btn active" data-mode="local">Локальный (Быстрый)</button>
+          <button class="mode-btn" data-mode="tmdb">Онлайн (TMDB)</button>
+        </div>
+      </div>
+
+      <button class="btn-start" id="btn-start">Начать подбор</button>
+      <div class="hero-meta">Без регистрации · Бесплатно · Работает на психологии</div>
+    </div>
+    <div class="film-strip">
+      <div class="film-strip-track">
+        <span>Паразиты</span><span>Манчестер у моря</span><span>Прочь</span><span>Жизнь Пи</span>
+        <span>Она</span><span>Меланхолия</span><span>1917</span><span>Атака титанов</span>
+        <span>Тихое место</span><span>Euphoria</span><span>Аркейн</span><span>Душа</span>
+        <span>Начало</span><span>Интерстеллар</span><span>Матрица</span><span>Форрест Гамп</span>
+        <span>Дюна</span><span>Бойцовский клуб</span><span>Леон</span><span>Зеленая миля</span>
+        <span>Криминальное чтиво</span><span>Темный рыцарь</span><span>Унесенные призраками</span><span>Джокер</span>
+        <span>Паразиты</span><span>Манчестер у моря</span><span>Прочь</span><span>Жизнь Пи</span>
+        <span>Она</span><span>Меланхолия</span><span>1917</span><span>Атака титанов</span>
+        <span>Тихое место</span><span>Euphoria</span><span>Аркейн</span><span>Душа</span>
+        <span>Начало</span><span>Интерстеллар</span><span>Матрица</span><span>Форрест Гамп</span>
+        <span>Дюна</span><span>Бойцовский клуб</span><span>Леон</span><span>Зеленая миля</span>
+        <span>Криминальное чтиво</span><span>Темный рыцарь</span><span>Унесенные призраками</span><span>Джокер</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- QUIZ -->
+  <section class="quiz-wrap hidden" id="screen-quiz">
+    <div class="quiz-inner">
+      <button class="btn-home" id="btn-home">← На главную</button>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar" id="progress-bar"></div>
+      </div>
+      <div class="step-label" id="step-label">Шаг 1 из 9</div>
+      <div id="steps-container"></div>
+      <div class="quiz-nav">
+        <button class="btn-back" id="btn-back">← Назад</button>
+        <button class="btn-next" id="btn-next">Далее →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- LOADING -->
+  <section class="loading-wrap hidden" id="screen-loading">
+    <div class="loading-content">
+      <div class="film-reel">🎞</div>
+      <h2 id="loading-title">Анализируем твоё состояние...</h2>
+      <div class="loading-steps" id="loading-steps">
+        <div class="ls-item active" id="ls1">Читаем настроение</div>
+        <div class="ls-item" id="ls2">Формируем запрос к базе</div>
+        <div class="ls-item" id="ls3">Получаем 1 000 000+ тайтлов</div>
+        <div class="ls-item" id="ls4">Финальный выбор</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- RESULTS -->
+  <section class="results-wrap hidden" id="screen-results">
+    <div class="results-inner">
+      <div class="results-header">
+        <div class="results-tag">Твой подбор готов</div>
+        <h2>Вот что тебе сейчас нужно</h2>
+      </div>
+
+      <!-- MAIN CARD -->
+      <div class="analysis-box hidden" id="analysis-box">
+        <h4>🧠 Анализ вашего состояния</h4>
+        <p id="analysis-text">—</p>
+      </div>
+
+      <div class="main-card" id="main-card">
+        <div class="card-glow"></div>
+        <div class="card-poster-wrap hidden" id="card-poster-wrap">
+          <img id="card-poster" src="" alt="Постер" />
+        </div>
+        <div class="card-body">
+          <div class="card-badge" id="main-badge">Главная рекомендация</div>
+          <div class="card-top">
+            <div class="card-info">
+              <h3 id="main-title">—</h3>
+              <div class="card-meta">
+                <span id="main-year">—</span>
+                <span class="dot">·</span>
+                <span id="main-type">—</span>
+                <span class="dot">·</span>
+                <span id="main-genre">—</span>
+              </div>
+              <div class="card-rating" id="main-rating">—</div>
+            </div>
+            <div class="mood-ring">
+              <svg viewBox="0 0 80 80">
+                <defs>
+                  <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stop-color="#7c5cfc"/>
+                    <stop offset="100%" stop-color="#fc5c7d"/>
+                  </linearGradient>
+                </defs>
+                <circle cx="40" cy="40" r="34" class="ring-bg"/>
+                <circle cx="40" cy="40" r="34" class="ring-fill" id="ring-fill"/>
+              </svg>
+              <span class="ring-pct" id="ring-pct">—%</span>
+              <span class="ring-label">совпадение</span>
+            </div>
+          </div>
+          <p class="card-why" id="main-why">—</p>
+          <div class="card-where-row">
+            <div class="card-where">
+              <span class="where-label">Где смотреть:</span>
+              <span class="where-val" id="main-where">—</span>
+            </div>
+            <a class="btn-tmdb hidden" id="btn-tmdb-link" href="#" target="_blank">Подробнее →</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- ALTERNATIVES -->
+      <div class="alts-label">Другие подходящие варианты:</div>
+      <div class="alts-grid" id="alts-grid"></div>
+
+      <button class="btn-refine" id="btn-refine">🎯 Уточнить подбор</button>
+      <button class="btn-restart" id="btn-restart">↩ Пройти заново</button>
+      <button class="btn-home-results" id="btn-home-results">🏠 На главную</button>
+    </div>
+  </section>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

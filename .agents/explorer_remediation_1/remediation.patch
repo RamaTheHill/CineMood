@@ -1,0 +1,281 @@
+diff --git a/cinemood/app.js b/cinemood/app.js
+index 1e2c3b4..5f6a7b8 100644
+--- a/cinemood/app.js
++++ b/cinemood/app.js
+@@ -609,6 +609,16 @@ let state = {
+ 
+ let recommendationsPromise = null;
+ 
++// Helper to escape HTML characters for XSS prevention
++function escapeHTML(str) {
++  if (!str) return "";
++  return str.toString()
++    .replace(/&/g, "&amp;")
++    .replace(/</g, "&lt;")
++    .replace(/>/g, "&gt;")
++    .replace(/"/g, "&quot;")
++    .replace(/'/g, "&#039;");
++}
++
+ // ─── INIT ────────────────────────────────────────────────────────────────────
+ 
+ document.getElementById("btn-start").addEventListener("click", () => {
+@@ -664,7 +674,7 @@ function renderStep() {
+     div.innerHTML = `
+       <h2>${s.emoji} ${s.question}</h2>
+       ${s.hint ? `<p class="step-hint">${s.hint}</p>` : ""}
+-      <textarea id="text-input" placeholder="Напиши здесь..." rows="4">${state.answers[s.id] || ""}</textarea>
++      <textarea id="text-input" placeholder="Напиши здесь..." rows="4">${escapeHTML(state.answers[s.id] || "")}</textarea>
+     `;
+   } else if (s.type === "options") {
+     const saved = state.answers[s.id];
+@@ -825,7 +835,10 @@ function showLoading() {
+   // Start TMDB fetch concurrently if in tmdb mode
+   if (state.mode === 'tmdb') {
+     const DEFAULT_TMDB_KEY = "15d2ea6d0dc1d476efbca3eba2b9bbfb";
+-    recommendationsPromise = fetchRecommendations(state.answers, DEFAULT_TMDB_KEY);
++    recommendationsPromise = Promise.race([
++      fetchRecommendations(state.answers, DEFAULT_TMDB_KEY),
++      new Promise((_, reject) => setTimeout(() => reject(new Error("TMDB fetch timeout")), 5000))
++    ]);
+   } else {
+     recommendationsPromise = Promise.resolve(getRecommendations());
+   }
+@@ -982,9 +995,6 @@ function getRecommendations() {
+ // ─── RESULTS ─────────────────────────────────────────────────────────────────
+ 
+ async function showResults() {
+-  hide("screen-loading");
+-  show("screen-results");
+-
+   let main, alts, uniqueTags = [];
+   try {
+     const data = await recommendationsPromise;
+@@ -1004,11 +1014,15 @@ async function showResults() {
+     uniqueTags = localData.uniqueTags;
+   }
+ 
++  // Transition screens only when data is resolved
++  hide("screen-loading");
++  show("screen-results");
++
+   // Analysis block
+   const aBox = document.getElementById("analysis-box");
+   const aText = document.getElementById("analysis-text");
+   if (uniqueTags.length > 0) {
+     show("analysis-box");
+-    aText.innerHTML = `Мы зацепились за ваши ответы, которые указали на состояния: <strong>${uniqueTags.join(", ")}</strong>. Алгоритм подобрал фильмы, которые лучше всего резонируют с этим настроением.`;
++    const escapedTags = uniqueTags.map(escapeHTML).join(", ");
++    aText.innerHTML = `Мы зацепились за ваши ответы, которые указали на состояния: <strong>${escapedTags}</strong>. Алгоритм подобрал фильмы, которые лучше всего резонируют с этим настроением.`;
+   } else {
+     hide("analysis-box");
+   }
+@@ -1040,18 +1054,6 @@ async function showResults() {
+     tmdbBtn.classList.add("hidden");
+   }
+ 
+-  // SVG gradient injection
+-  const svg = document.querySelector(".mood-ring svg");
+-  svg.innerHTML = `
+-    <defs>
+-      <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+-        <stop offset="0%" stop-color="#7c5cfc"/>
+-        <stop offset="100%" stop-color="#fc5c7d"/>
+-      </linearGradient>
+-    </defs>
+-    <circle cx="40" cy="40" r="34" class="ring-bg"/>
+-    <circle cx="40" cy="40" r="34" class="ring-fill" id="ring-fill"/>
+-  `;
+-
+   // Animate ring
+   const circumference = 2 * Math.PI * 34;
+   const fill = document.getElementById("ring-fill");
+@@ -1066,13 +1068,13 @@ async function showResults() {
+   const grid = document.getElementById("alts-grid");
+   grid.innerHTML = alts.map(a => `
+     <div class="alt-card">
+-      ${a.poster_url ? `<div class="alt-poster-wrap"><img src="${a.poster_url}" alt="Постер"></div>` : '<div class="alt-poster-wrap missing-poster"><div class="alt-poster-placeholder">🎬<br><span>Постер отсутствует</span></div></div>'}
++      ${a.poster_url ? `<div class="alt-poster-wrap"><img src="${escapeHTML(a.poster_url)}" alt="Постер"></div>` : '<div class="alt-poster-wrap missing-poster"><div class="alt-poster-placeholder">🎬<br><span>Постер отсутствует</span></div></div>'}
+       <div class="alt-body">
+-        <h4>${a.title}</h4>
+-        <div class="alt-meta">${a.year} · ${a.type} · ${a.genre}</div>
+-        <div class="alt-match">${a.mood_match}% совпадение</div>
+-        <p class="alt-why">${a.why_template.split(".")[0] + "."}</p>
+-        <div class="alt-where">📍 ${a.where}</div>
++        <h4>${escapeHTML(a.title)}</h4>
++        <div class="alt-meta">${escapeHTML(a.year)} · ${escapeHTML(a.type)} · ${escapeHTML(a.genre)}</div>
++        <div class="alt-match">${escapeHTML(a.mood_match)}% совпадение</div>
++        <p class="alt-why">${escapeHTML(a.why_template.split(".")[0] + ".")}</p>
++        <div class="alt-where">📍 ${escapeHTML(a.where)}</div>
+       </div>
+     </div>
+   `).join("");
+@@ -1124,6 +1126,7 @@ function startCarousel() {
+ 
+     // Restore transition style
+     nextSlide.style.transition = "";
++    nextSlide.style.transform = "";
+ 
+     // Remove active class from current, add to next
+     currentSlide.classList.remove("active");
+diff --git a/cinemood/index.html b/cinemood/index.html
+index 2d3e4f5..3e4f5a6 100644
+--- a/cinemood/index.html
++++ b/cinemood/index.html
+@@ -43,9 +43,15 @@
+       <div class="film-strip-track">
+         <span>Паразиты</span><span>Манчестер у моря</span><span>Прочь</span><span>Жизнь Пи</span>
+         <span>Она</span><span>Меланхолия</span><span>1917</span><span>Атака титанов</span>
+         <span>Тихое место</span><span>Euphoria</span><span>Аркейн</span><span>Душа</span>
++        <span>Начало</span><span>Интерстеллар</span><span>Матрица</span><span>Форрест Гамп</span>
++        <span>Дюна</span><span>Бойцовский клуб</span><span>Леон</span><span>Зеленая миля</span>
++        <span>Криминальное чтиво</span><span>Темный рыцарь</span><span>Унесенные призраками</span><span>Джокер</span>
+         <span>Паразиты</span><span>Манчестер у моря</span><span>Прочь</span><span>Жизнь Пи</span>
+         <span>Она</span><span>Меланхолия</span><span>1917</span><span>Атака титанов</span>
+         <span>Тихое место</span><span>Euphoria</span><span>Аркейн</span><span>Душа</span>
++        <span>Начало</span><span>Интерстеллар</span><span>Матрица</span><span>Форрест Гамп</span>
++        <span>Дюна</span><span>Бойцовский клуб</span><span>Леон</span><span>Зеленая миля</span>
++        <span>Криминальное чтиво</span><span>Темный рыцарь</span><span>Унесенные призраками</span><span>Джокер</span>
+       </div>
+     </div>
+   </section>
+@@ -116,6 +122,12 @@
+             </div>
+             <div class="mood-ring">
+               <svg viewBox="0 0 80 80">
++                <defs>
++                  <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="0%">
++                    <stop offset="0%" stop-color="#7c5cfc"/>
++                    <stop offset="100%" stop-color="#fc5c7d"/>
++                  </linearGradient>
++                </defs>
+                 <circle cx="40" cy="40" r="34" class="ring-bg"/>
+                 <circle cx="40" cy="40" r="34" class="ring-fill" id="ring-fill"/>
+               </svg>
+diff --git a/cinemood/style.css b/cinemood/style.css
+index 4f5a6b7..5b6c7d8 100644
+--- a/cinemood/style.css
++++ b/cinemood/style.css
+@@ -186,47 +186,13 @@
+ /* SVG gradient defs (hidden) */
+ body::before { content: ''; position: absolute; width: 0; height: 0; overflow: hidden; }
+ 
+-@media(max-width: 768px) {
+-  .main-card { flex-direction: column; }
+-  .card-poster-wrap { width: 100%; height: auto; aspect-ratio: 2 / 3; }
+-  .card-poster-wrap img { border-right: none; border-bottom: 1px solid var(--border); }
+-  .alts-grid { grid-template-columns: 1fr; }
+-  .card-top { flex-direction: column-reverse; }
+-  .mood-ring { width: 60px; height: 60px; }
+-  .options-grid.cols2 { grid-template-columns: 1fr; }
+-}
+-
+-@media(max-width: 480px) {
+-  .hero-content { padding: 1.25rem; }
+-  .quiz-wrap { padding: 1.25rem; }
+-  .results-wrap { padding: 2rem 1rem; }
+-  .card-body { padding: 1.25rem; }
+-  .alt-body { padding: 1rem; }
+-  .step h2 { font-size: 1.3rem; }
+-  .step-label { margin-bottom: 1.5rem; }
+-  .mode-toggle-wrap {
+-    flex-direction: column;
+-    gap: 0.5rem;
+-    align-items: stretch;
+-    margin-bottom: 1.5rem;
+-  }
+-  .mode-toggle {
+-    flex-direction: column;
+-    width: 100%;
+-    border-radius: 16px;
+-  }
+-  .mode-btn {
+-    width: 100%;
+-    padding: 0.6rem 1rem;
+-  }
+-}
+-
+-@media (max-height: 500px) {
+-  .film-strip { display: none !important; }
+-  .logo { margin-bottom: 1rem; }
+-  .subtitle { margin-bottom: 1.5rem; }
+-  .hero-content h1 { margin-bottom: 0.75rem; }
+-}
+-
+-
+ /* ─── MODE TOGGLE SWITCH ─── */
+ .mode-toggle-wrap {
+   display: flex;
+@@ -280,6 +246,7 @@
+   align-items: center;
+   margin-top: 1rem;
+   gap: 1rem;
++  flex-wrap: wrap;
+ }
+ .btn-tmdb {
+   display: inline-flex;
+@@ -325,3 +292,49 @@
+   letter-spacing: 0.05em;
+   opacity: 0.7;
+ }
++
++/* ─── RESPONSIVE LAYOUT MEDIA QUERIES ─── */
++@media(max-width: 768px) {
++  .main-card { flex-direction: column; }
++  .card-poster-wrap { width: 100%; height: auto; aspect-ratio: 2 / 3; }
++  .card-poster-wrap img { border-right: none; border-bottom: 1px solid var(--border); }
++  .alts-grid { grid-template-columns: 1fr; }
++  .card-top { flex-direction: column-reverse; }
++  .mood-ring { width: 60px; height: 60px; }
++  .ring-label { font-size: 0.5rem; } /* Shrink label on mobile to avoid overlap */
++  .options-grid.cols2 { grid-template-columns: 1fr; }
++}
++
++@media(max-width: 480px) {
++  .hero-content { padding: 1.25rem; }
++  .quiz-wrap { padding: 1.25rem; }
++  .results-wrap { padding: 2rem 1rem; }
++  .card-body { padding: 1.25rem; }
++  .alt-body { padding: 1rem; }
++  .step h2 { font-size: 1.3rem; }
++  .step-label { margin-bottom: 1.5rem; }
++  .mode-toggle-wrap {
++    flex-direction: column;
++    gap: 0.5rem;
++    align-items: stretch;
++    margin-bottom: 1.5rem;
++  }
++  .mode-toggle {
++    flex-direction: column;
++    width: 100%;
++    border-radius: 16px;
++  }
++  .mode-btn {
++    width: 100%;
++    padding: 0.6rem 1rem;
++  }
++  .card-where-row {
++    flex-direction: column;
++    align-items: stretch;
++    gap: 0.75rem;
++  }
++  .btn-tmdb {
++    justify-content: center;
++    width: 100%;
++  }
++}
++
++@media (max-height: 500px) {
++  .film-strip { display: none !important; }
++  .logo { margin-bottom: 1rem; }
++  .subtitle { margin-bottom: 1.5rem; }
++  .hero-content h1 { margin-bottom: 0.75rem; }
++}
++
++@media (max-height: 680px) {
++  .quiz-wrap {
++    align-items: flex-start;
++    padding-top: 1rem;
++    padding-bottom: 1rem;
++  }
++}

@@ -1,0 +1,3 @@
+## 2026-06-10T20:59:09Z
+You are teamwork_preview_auditor. Your working directory is `/Users/ramathehill/CineMood/.agents/auditor_milestone_1`.
+Perform a forensic integrity check of the Milestone 1 changes. Ensure that the implementation does not bypass any requirements or hardcode results, and that there are no dummy/facade implementations. Check that the images load properly, styles are applied, and no layout shifts or browser console errors occur. Write your audit report to `audit_report.md` and handoff to `handoff.md`. Send a message to the orchestrator (ID: af1cd4da-7fa6-45bd-b69f-b264bf8906fc) when complete.

@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { background: #0a0a0f; color: #f0f0f8; font-family: sans-serif; padding: 2rem; }
+    h2 { margin-bottom: 0.5rem; }
+    .viewport-simulation {
+      border: 2px dashed #7c5cfc;
+      background: #13131d;
+      position: relative;
+      height: 60px;
+      overflow: hidden;
+      margin-bottom: 2rem;
+    }
+    /* Set simulated viewport widths */
+    .w-1920 { width: 1920px; }
+    .w-1200 { width: 1200px; }
+    
+    .film-strip {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      overflow: hidden;
+      white-space: nowrap;
+      background: rgba(255,255,255,.03);
+      border-top: 1px solid rgba(255,255,255,0.07);
+      padding: .6rem 0;
+    }
+    .film-strip-track {
+      display: inline-block;
+      animation: marquee 30s linear infinite;
+    }
+    .film-strip span {
+      display: inline-block;
+      margin: 0 2rem;
+      font-size: .75rem;
+      color: #8080a0;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+    }
+    @keyframes marquee {
+      0% { transform: translate3d(0, 0, 0); }
+      100% { transform: translate3d(-50%, 0, 0); }
+    }
+    .log-box {
+      background: #1a1a2a;
+      border: 1px solid rgba(255,255,255,0.07);
+      padding: 1rem;
+      border-radius: 8px;
+      max-width: 600px;
+      font-family: monospace;
+    }
+  </style>
+</head>
+<body>
+  <h2>Simulated Viewport: 1920px (Look at the right side - does it snap/gap?)</h2>
+  <div class="viewport-simulation w-1920">
+    <div class="film-strip">
+      <div class="film-strip-track" id="track-1920">
+        <span>Паразиты</span><span>Манчестер у моря</span><span>Прочь</span><span>Жизнь Пи</span>
+        <span>Она</span><span>Меланхолия</span><span>1917</span><span>Атака титанов</span>
+        <span>Тихое место</span><span>Euphoria</span><span>Аркейн</span><span>Душа</span>
+        <span>Паразиты</span><span>Манчестер у моря</span><span>Прочь</span><span>Жизнь Пи</span>
+        <span>Она</span><span>Меланхолия</span><span>1917</span><span>Атака титанов</span>
+        <span>Тихое место</span><span>Euphoria</span><span>Аркейн</span><span>Душа</span>
+      </div>
+    </div>
+  </div>
+
+  <h2>Simulated Viewport: 1200px (Smooth and continuous)</h2>
+  <div class="viewport-simulation w-1200">
+    <div class="film-strip">
+      <div class="film-strip-track">
+        <span>Паразиты</span><span>Манчестер у моря</span><span>Прочь</span><span>Жизнь Пи</span>
+        <span>Она</span><span>Меланхолия</span><span>1917</span><span>Атака титанов</span>
+        <span>Тихое место</span><span>Euphoria</span><span>Аркейн</span><span>Душа</span>
+        <span>Паразиты</span><span>Манчестер у моря</span><span>Прочь</span><span>Жизнь Пи</span>
+        <span>Она</span><span>Меланхолия</span><span>1917</span><span>Атака титанов</span>
+        <span>Тихое место</span><span>Euphoria</span><span>Аркейн</span><span>Душа</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="log-box" id="info">Calculating widths...</div>
+
+  <script>
+    window.onload = function() {
+      const track = document.getElementById("track-1920");
+      const totalWidth = track.offsetWidth;
+      const halfWidth = totalWidth / 2;
+      document.getElementById("info").innerHTML = `
+        <strong>Marquee Measurements:</strong><br/>
+        Total track width (24 spans): ${totalWidth}px<br/>
+        Half track width (12 spans): ${halfWidth}px<br/>
+        <br/>
+        <strong>Analysis:</strong><br/>
+        - On a 1920px screen, the screen width is larger than one set of spans (${halfWidth}px).<br/>
+        - At the end of the animation (-50%), the track is translated by -${halfWidth}px.<br/>
+        - The remaining visible width of the track is ${halfWidth}px, leaving a gap of 1920px - ${halfWidth}px = ${(1920 - halfWidth).toFixed(0)}px of empty space on the right.<br/>
+        - When the animation resets, it snaps, causing a visible jump of ${(1920 - halfWidth).toFixed(0)}px.<br/>
+      `;
+    };
+  </script>
+</body>
+</html>

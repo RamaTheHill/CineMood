@@ -1,0 +1,167 @@
+diff --git a/cinemood/api.js b/cinemood/api.js
+index a123456..b789101 100644
+--- a/cinemood/api.js
++++ b/cinemood/api.js
+@@ -112,3 +112,3 @@ export function buildParams(answers) {
+   // Year range
+-  const yr = answers.year_range || { from: 2007, to: 2026 };
++  const yr = answers.year_range || { from: 1890, to: 2026 };
+ 
+@@ -135,4 +135,5 @@ export function buildParams(answers) {
+     contentType: answers.content_type || 'any',
+     ageRating: answers.age_rating || 'any',
++    language: answers.language || 'any',
+   };
+ }
+@@ -228,11 +229,32 @@ function resolveEndpoints(params) {
+ function buildUrl(ep, params, apiKey) {
++  const startYear = params.yearFrom || 2007;
++  const isClassic = startYear < 1990;
++  const isNicheLang = params.language && params.language !== 'en' && params.language !== 'any';
++
++  let voteCountGte = 300;
++  let voteAverageGte = 6.5;
++
++  if (isClassic) {
++    if (startYear < 1930) {
++      voteCountGte = 5;
++      voteAverageGte = 5.0;
++    } else if (startYear < 1960) {
++      voteCountGte = 15;
++      voteAverageGte = 5.5;
++    } else if (startYear < 1980) {
++      voteCountGte = 50;
++      voteAverageGte = 6.0;
++    } else {
++      voteCountGte = 100;
++      voteAverageGte = 6.0;
++    }
++  } else if (isNicheLang) {
++    voteCountGte = 50;
++    voteAverageGte = 6.0;
++  }
++
++  let sortBy = 'vote_average.desc';
++  if (voteCountGte < 50) {
++    sortBy = 'popularity.desc';
++  }
++
+   const p = new URLSearchParams({
+     api_key: apiKey,
+     language: 'ru-RU',
+-    sort_by: 'vote_average.desc',
+-    'vote_count.gte': 300,
+-    'vote_average.gte': 6.5,
++    sort_by: sortBy,
++    'vote_count.gte': voteCountGte,
++    'vote_average.gte': voteAverageGte,
+     page: 1,
+     ...ep.extra,
+   });
+@@ -256,2 +278,16 @@ function buildUrl(ep, params, apiKey) {
+ 
++  // Language / Region mapping
++  if (params.language && params.language !== 'any') {
++    const langMap = {
++      cis: 'ru|uk|be|kk',
++      en: 'en',
++      asia: 'ja|ko|zh',
++      eu: 'fr|it|de|es|da|sv|no|nl|pt|pl'
++    };
++    const targetLangs = langMap[params.language];
++    if (targetLangs && !ep.extra.with_origin_country) {
++      p.set('with_original_language', targetLangs);
++    }
++  }
++
+   return `${TMDB_BASE}${ep.endpoint}?${p.toString()}`;
+ }
+diff --git a/cinemood/app.js b/cinemood/app.js
+index c123456..d789101 100644
+--- a/cinemood/app.js
++++ b/cinemood/app.js
+@@ -440,2 +440,26 @@ const FILMS_DB = [
+     where: "YouTube (бесплатно)", audience: "any", exclude: [], poster_url: "https://image.tmdb.org/t/p/w500/gYVNpaKMljE4PBxA7mDVGwPLig7.jpg"
++  },
++  {
++    title: "Броненосец «Потёмкин»",
++    year: 1925, type: "фильм", genre: "драма, история",
++    rating: "8.0 IMDb", age_rating: "12+", region: "cis",
++    mood_tags: ["философия","драма","история","бунт","смерть","вопросы"],
++    why_template: "Абсолютная классика мирового кино от Сергея Эйзенштейна. Фильм, изменивший монтаж навсегда. Для погружения в истоки киноискусства и проживания мощного исторического катарсиса.",
++    where: "YouTube (бесплатно), Кинопоиск", audience: "solo", exclude: [], poster_url: "https://image.tmdb.org/t/p/w500/olwFj0H905LzGg5gLhM2w76z2Xo.jpg"
++  },
++  {
++    title: "Человек с киноаппаратом",
++    year: 1929, type: "фильм", genre: "авангард, документальный",
++    rating: "8.4 IMDb", age_rating: "0+", region: "cis",
++    mood_tags: ["город","ритм","жизнь","красиво","движение","энергия","настроение"],
++    why_template: "Шедевр Дзиги Вертова, регулярно признаваемый лучшим документальным фильмом всех времен. Чистый визуальный ритм и магия киноязыка без единого слова.",
++    where: "YouTube (бесплатно)", audience: "any", exclude: [], poster_url: "https://image.tmdb.org/t/p/w500/gCdfwB9N6C3f3Z42d17x98X1P5X.jpg"
++  },
++  {
++    title: "Метрополис",
++    year: 1927, type: "фильм", genre: "фантастика, драма",
++    rating: "8.3 IMDb", age_rating: "6+",
++    mood_tags: ["будущее","город","система","машина","философия","вопросы","красиво"],
++    why_template: "Монументальная антиутопия Фрица Ланга, визуальный стиль которой определил облик фантастики на век вперед. Великая притча о сердце, посредничающем между разумом и руками.",
++    where: "YouTube (бесплатно), Okko", audience: "any", exclude: [], poster_url: "https://image.tmdb.org/t/p/w500/2L94bYg6m1N2hXv1l5O12eG8WkM.jpg"
++  },
++  {
++    title: "Летят журавли",
++    year: 1957, type: "фильм", genre: "драма, мелодрама, война",
++    rating: "8.3 IMDb", age_rating: "12+", region: "cis",
++    mood_tags: ["война","любовь","потеря","тоска","боль","красиво","надежда","нежность"],
++    why_template: "Единственный советский фильм, получивший «Золотую пальмовую ветвь» Каннского фестиваля. Невероятная операторская работа Урусевского и пронзительная драма о любви во время войны.",
++    where: "YouTube (бесплатно), Кинопоиск", audience: "solo", exclude: [], poster_url: "https://image.tmdb.org/t/p/w500/tL7PZz7z4Z6F4bF1L3Xg1Y6Z2M2.jpg"
+   }
+ ];
+@@ -530,2 +554,2 @@   {
+     hint: "Перетащи ползунки чтобы выбрать диапазон",
+-    min: 1930, max: 2026, defaultFrom: 2007, defaultTo: 2026
++    min: 1890, max: 2026, defaultFrom: 2007, defaultTo: 2026
+   },
+@@ -865,8 +889,14 @@ const AGE_ORDER = ["0+", "6+", "12+", "16+", "18+"];
+ 
+-function scoreFilm(film, matched_tags = []) {
++function scoreFilm(film, matched_tags = [], softYearFilter = false) {
+   const a = state.answers;
+   let score = 0;
+ 
+-  // ── Year range filter (hard) ──
++  // ── Year range filter ──
+   const yr = a.year_range;
+   if (yr) {
+-    if (film.year < yr.from || film.year > yr.to) return -999;
++    if (film.year < yr.from || film.year > yr.to) {
++      if (softYearFilter) {
++        score -= 40;
++      } else {
++        return -999;
++      }
++    }
+   }
+@@ -974,7 +1004,19 @@ function getRecommendations() {
+   let allTags = [];
+-  const scored = FILMS_DB.map(f => {
++  let scored = FILMS_DB.map(f => {
+     let mTags = [];
+-    const score = scoreFilm(f, mTags);
++    const score = scoreFilm(f, mTags, false);
+     if (mTags.length) allTags.push(...mTags);
+     return { ...f, score, mTags };
+   });
++
++  // If all local movies were excluded by hard year/rating/format limits,
++  // re-score with relaxed soft year boundaries to ensure high-quality recommendations.
++  const maxScore = Math.max(...scored.map(s => s.score));
++  if (maxScore <= 0 && scored.some(s => s.score === 0)) {
++    allTags = [];
++    scored = FILMS_DB.map(f => {
++      let mTags = [];
++      const score = scoreFilm(f, mTags, true);
++      if (mTags.length) allTags.push(...mTags);
++      return { ...f, score, mTags };
++    });
++  }
+ 

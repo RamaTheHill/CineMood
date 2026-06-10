@@ -1,0 +1,272 @@
+diff --git a/cinemood/index.html b/cinemood/index.html
+--- a/cinemood/index.html
++++ b/cinemood/index.html
+@@ -42,10 +42,14 @@
+     <div class="film-strip">
+       <div class="film-strip-track">
+         <span>Паразиты</span><span>Манчестер у моря</span><span>Прочь</span><span>Жизнь Пи</span>
+         <span>Она</span><span>Меланхолия</span><span>1917</span><span>Атака титанов</span>
+         <span>Тихое место</span><span>Euphoria</span><span>Аркейн</span><span>Душа</span>
++        <span>Интерстеллар</span><span>Начало</span><span>Тёмный рыцарь</span><span>Бойцовский клуб</span>
++        <span>Зелёная миля</span><span>Побег из Шоушенка</span><span>Форрест Гамп</span><span>Криминальное чтиво</span>
++        <span>Матрица</span><span>Леон</span><span>Гладиатор</span><span>Престиж</span>
+         <span>Паразиты</span><span>Манчестер у моря</span><span>Прочь</span><span>Жизнь Пи</span>
+         <span>Она</span><span>Меланхолия</span><span>1917</span><span>Атака титанов</span>
+         <span>Тихое место</span><span>Euphoria</span><span>Аркейн</span><span>Душа</span>
++        <span>Интерстеллар</span><span>Начало</span><span>Тёмный рыцарь</span><span>Бойцовский клуб</span>
++        <span>Зелёная миля</span><span>Побег из Шоушенка</span><span>Форрест Гамп</span><span>Криминальное чтиво</span>
++        <span>Матрица</span><span>Леон</span><span>Гладиатор</span><span>Престиж</span>
+       </div>
+     </div>
+   </section>
+@@ -117,6 +121,12 @@
+             <div class="mood-ring">
+               <svg viewBox="0 0 80 80">
++                <defs>
++                  <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="0%">
++                    <stop offset="0%" stop-color="#7c5cfc"/>
++                    <stop offset="100%" stop-color="#fc5c7d"/>
++                  </linearGradient>
++                </defs>
+                 <circle cx="40" cy="40" r="34" class="ring-bg"/>
+                 <circle cx="40" cy="40" r="34" class="ring-fill" id="ring-fill"/>
+               </svg>
+diff --git a/cinemood/style.css b/cinemood/style.css
+--- a/cinemood/style.css
++++ b/cinemood/style.css
+@@ -44,7 +44,19 @@
+ @keyframes marquee { 0%{transform:translate3d(0, 0, 0)} 100%{transform:translate3d(-50%, 0, 0)} }
+ 
+ /* ─── QUIZ ─── */
+-.quiz-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem; }
++.quiz-wrap {
++  min-height: 100vh;
++  min-height: 100dvh;
++  display: flex;
++  align-items: center;
++  justify-content: center;
++  padding: 2rem;
++}
++@media(max-height: 600px) {
++  .quiz-wrap {
++    align-items: flex-start;
++    padding-top: 1rem;
++    padding-bottom: 1rem;
++  }
++}
+ .quiz-inner { width: 100%; max-width: 600px; }
+ 
+@@ -186,45 +198,4 @@
+ /* SVG gradient defs (hidden) */
+ body::before { content: ''; position: absolute; width: 0; height: 0; overflow: hidden; }
+ 
+-@media(max-width: 768px) {
+-  .main-card { flex-direction: column; }
+-  .card-poster-wrap { width: 100%; height: auto; aspect-ratio: 2 / 3; }
+-  .card-poster-wrap img { border-right: none; border-bottom: 1px solid var(--border); }
+-  .alts-grid { grid-template-columns: 1fr; }
+-  .card-top { flex-direction: column-reverse; }
+-  .mood-ring { width: 60px; height: 60px; }
+-  .options-grid.cols2 { grid-template-columns: 1fr; }
+-}
+-
+-@media(max-width: 480px) {
+-  .hero-content { padding: 1.25rem; }
+-  .quiz-wrap { padding: 1.25rem; }
+-  .results-wrap { padding: 2rem 1rem; }
+-  .card-body { padding: 1.25rem; }
+-  .alt-body { padding: 1rem; }
+-  .step h2 { font-size: 1.3rem; }
+-  .step-label { margin-bottom: 1.5rem; }
+-  .mode-toggle-wrap {
+-    flex-direction: column;
+-    gap: 0.5rem;
+-    align-items: stretch;
+-    margin-bottom: 1.5rem;
+-  }
+-  .mode-toggle {
+-    flex-direction: column;
+-    width: 100%;
+-    border-radius: 16px;
+-  }
+-  .mode-btn {
+-    width: 100%;
+-    padding: 0.6rem 1rem;
+-  }
+-}
+-
+-@media (max-height: 500px) {
+-  .film-strip { display: none !important; }
+-  .logo { margin-bottom: 1rem; }
+-  .subtitle { margin-bottom: 1.5rem; }
+-  .hero-content h1 { margin-bottom: 0.75rem; }
+-}
+-
+ 
+ /* ─── MODE TOGGLE SWITCH ─── */
+@@ -324,4 +275,50 @@
+   letter-spacing: 0.05em;
+   opacity: 0.7;
+ }
+-
++
++/* ─── RESPONSIVE LAYOUTS (MEDIA QUERIES AT END OF FILE) ─── */
++@media(max-width: 768px) {
++  .main-card { flex-direction: column; }
++  .card-poster-wrap { width: 100%; height: auto; aspect-ratio: 2 / 3; }
++  .card-poster-wrap img { border-right: none; border-bottom: 1px solid var(--border); }
++  .alts-grid { grid-template-columns: 1fr; }
++  .card-top { flex-direction: column-reverse; }
++  .mood-ring { width: 60px; height: 60px; }
++  .ring-pct { font-size: 0.85rem; }
++  .ring-label { font-size: 0.5rem; letter-spacing: -0.02em; }
++  .options-grid.cols2 { grid-template-columns: 1fr; }
++}
++
++@media(max-width: 480px) {
++  .hero-content { padding: 1.25rem; }
++  .quiz-wrap { padding: 1.25rem; }
++  .results-wrap { padding: 2rem 1rem; }
++  .card-body { padding: 1.25rem; }
++  .alt-body { padding: 1rem; }
++  .step h2 { font-size: 1.3rem; }
++  .step-label { margin-bottom: 1.5rem; }
++  .mode-toggle-wrap {
++    flex-direction: column;
++    gap: 0.5rem;
++    align-items: stretch;
++    margin-bottom: 1.5rem;
++  }
++  .mode-toggle {
++    flex-direction: column;
++    width: 100%;
++    border-radius: 16px;
++  }
++  .mode-btn {
++    width: 100%;
++    padding: 0.6rem 1rem;
++  }
++  .card-where-row {
++    flex-direction: column;
++    align-items: stretch;
++    gap: 0.75rem;
++  }
++  .btn-tmdb {
++    justify-content: center;
++    width: 100%;
++  }
++}
++
++@media (max-height: 500px) {
++  .film-strip { display: none !important; }
++  .logo { margin-bottom: 1rem; }
++  .subtitle { margin-bottom: 1.5rem; }
++  .hero-content h1 { margin-bottom: 0.75rem; }
++}
+diff --git a/cinemood/app.js b/cinemood/app.js
+--- a/cinemood/app.js
++++ b/cinemood/app.js
+@@ -608,4 +608,12 @@
+   multiSelected: new Set(),
+   mode: 'local' // 'local' or 'tmdb'
+ };
+ 
++function escapeHTML(str) {
++  if (!str) return "";
++  return String(str)
++    .replace(/&/g, "&amp;")
++    .replace(/</g, "&lt;")
++    .replace(/>/g, "&gt;")
++    .replace(/"/g, "&quot;")
++    .replace(/'/g, "&#039;");
++}
++
+ // ─── INIT ────────────────────────────────────────────────────────────────────
+@@ -825,6 +833,12 @@
+   // Start TMDB fetch concurrently if in tmdb mode
+   if (state.mode === 'tmdb') {
+     const DEFAULT_TMDB_KEY = "15d2ea6d0dc1d476efbca3eba2b9bbfb";
+-    recommendationsPromise = fetchRecommendations(state.answers, DEFAULT_TMDB_KEY);
++    const timeoutPromise = new Promise((_, reject) =>
++      setTimeout(() => reject(new Error("TMDB request timed out")), 5000)
++    );
++    recommendationsPromise = Promise.race([
++      fetchRecommendations(state.answers, DEFAULT_TMDB_KEY),
++      timeoutPromise
++    ]);
+   } else {
+     recommendationsPromise = Promise.resolve(getRecommendations());
+   }
+@@ -984,6 +998,4 @@
+ async function showResults() {
+-  hide("screen-loading");
+-  show("screen-results");
+-
+   let main, alts, uniqueTags = [];
+   try {
+     const data = await recommendationsPromise;
+@@ -1006,10 +1018,14 @@
+ 
++  // Transition screens ONLY when data is ready
++  hide("screen-loading");
++  show("screen-results");
++
+   // Analysis block
+   const aBox = document.getElementById("analysis-box");
+   const aText = document.getElementById("analysis-text");
+   if (uniqueTags.length > 0) {
+     show("analysis-box");
+-    aText.innerHTML = `Мы зацепились за ваши ответы, которые указали на состояния: <strong>${uniqueTags.join(", ")}</strong>. Алгоритм подобрал фильмы, которые лучше всего резонируют с этим настроением.`;
++    const safeTags = uniqueTags.map(t => escapeHTML(t));
++    aText.innerHTML = `Мы зацепились за ваши ответы, которые указали на состояния: <strong>${safeTags.join(", ")}</strong>. Алгоритм подобрал фильмы, которые лучше всего резонируют с этим настроением.`;
+   } else {
+     hide("analysis-box");
+   }
+@@ -1041,13 +1057,2 @@
+ 
+-  // SVG gradient injection
+-  const svg = document.querySelector(".mood-ring svg");
+-  svg.innerHTML = `
+-    <defs>
+-      <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+-        <stop offset="0%" stop-color="#7c5cfc"/>
+-        <stop offset="100%" stop-color="#fc5c7d"/>
+-      </linearGradient>
+-    </defs>
+-    <circle cx="40" cy="40" r="34" class="ring-bg"/>
+-    <circle cx="40" cy="40" r="34" class="ring-fill" id="ring-fill"/>
+-  `;
+-
+   // Animate ring
+@@ -1059,2 +1064,2 @@
+   fill.style.strokeDashoffset = circumference;
+-  fill.setAttribute("stroke", "url(#ringGrad)");
++  // The stroke is already styled via CSS class ring-fill referencing #ringGrad defined in index.html
+   setTimeout(() => {
+@@ -1068,12 +1073,12 @@
+   const grid = document.getElementById("alts-grid");
+   grid.innerHTML = alts.map(a => `
+     <div class="alt-card">
+-      ${a.poster_url ? `<div class="alt-poster-wrap"><img src="${a.poster_url}" alt="Постер"></div>` : '<div class="alt-poster-wrap missing-poster"><div class="alt-poster-placeholder">🎬<br><span>Постер отсутствует</span></div></div>'}
++      ${a.poster_url ? `<div class="alt-poster-wrap"><img src="${escapeHTML(a.poster_url)}" alt="Постер"></div>` : '<div class="alt-poster-wrap missing-poster"><div class="alt-poster-placeholder">🎬<br><span>Постер отсутствует</span></div></div>'}
+       <div class="alt-body">
+-        <h4>${a.title}</h4>
+-        <div class="alt-meta">${a.year} · ${a.type} · ${a.genre}</div>
+-        <div class="alt-match">${a.mood_match}% совпадение</div>
+-        <p class="alt-why">${a.why_template.split(".")[0] + "."}</p>
+-        <div class="alt-where">📍 ${a.where}</div>
++        <h4>${escapeHTML(a.title)}</h4>
++        <div class="alt-meta">${escapeHTML(a.year)} · ${escapeHTML(a.type)} · ${escapeHTML(a.genre)}</div>
++        <div class="alt-match">${escapeHTML(a.mood_match)}% совпадение</div>
++        <p class="alt-why">${escapeHTML(a.why_template.split(".")[0] + ".")}</p>
++        <div class="alt-where">📍 ${escapeHTML(a.where)}</div>
+       </div>
+     </div>
+   `).join("");
+@@ -1125,4 +1130,5 @@
+ 
+     // Restore transition style
+     nextSlide.style.transition = "";
++    nextSlide.style.transform = ""; // Reset inline transform so stylesheet transition to scale(1.02) runs
+ 
+     // Remove active class from current, add to next
